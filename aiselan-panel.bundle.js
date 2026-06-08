@@ -9,24 +9,24 @@ var AP_CSS = `:root{--ap-bg-deepest: #070a0f; --ap-bg-deep: #0c1119; --ap-bg-sur
 
 /* ============ CSS 注入 ============ */
 (function injectCSS(){
-    if(document.getElementById('aiselan-panel-styles'))return;
-    var style=document.createElement('style');
+    if(DOC.getElementById('aiselan-panel-styles'))return;
+    var style=DOC.createElement('style');
     style.id='aiselan-panel-styles';
     style.textContent=AP_CSS;
-    document.head.appendChild(style);
+    DOC.head.appendChild(style);
 })();
 
 /* ============ 等待 DOM 就绪后初始化 ============ */
 function waitForST(cb){
     console.log('[艾瑟兰作战面板] 等待 ST 就绪...');
-    if(document.getElementById('sheld')){
+    if(DOC.getElementById('sheld')){
         console.log('[艾瑟兰作战面板] #sheld 已存在，立即初始化');
         cb();
         return;
     }
     var count=0;
     var timer=setInterval(function(){
-        if(document.getElementById('sheld')){
+        if(DOC.getElementById('sheld')){
             clearInterval(timer);
             console.log('[艾瑟兰作战面板] #sheld 就绪 (等待 '+(count*200)+'ms)');
             cb();
@@ -95,12 +95,15 @@ function ensureDefaults(){
 function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
 
 /* ============ DOM 构建 ============ */
-var $=function(s){return document.querySelector(s);};
-var $$=function(s){return document.querySelectorAll(s);};
+// 脚本在酒馆助手隐藏 iframe 中执行，必须通过 parent 访问主页面 DOM
+var DOC=window.parent.document;
+var W=window.parent;
+var $=function(s){return DOC.querySelector(s);};
+var $$=function(s){return DOC.querySelectorAll(s);};
 
 function buildPanelDOM(){
-    if(document.getElementById('aiselan-game-panel'))return;
-    var panel=document.createElement('div');
+    if(DOC.getElementById('aiselan-game-panel'))return;
+    var panel=DOC.createElement('div');
     panel.id='aiselan-game-panel';
     panel.className='aiselan-panel';
     panel.setAttribute('aria-label','艾瑟兰大陆作战面板');
@@ -123,8 +126,8 @@ function buildPanelDOM(){
         '<div class="aiselan-tab-panel" id="panel-status" role="tabpanel"></div>'+
         '<div class="aiselan-tab-panel" id="panel-inventory" role="tabpanel"></div></div></div>'+
         '<div class="aiselan-toast-container" id="aiselan-toast-container" aria-live="polite"></div>';
-    var sheld=document.getElementById('sheld');
-    (sheld||document.body).appendChild(panel);
+    var sheld=DOC.getElementById('sheld');
+    (sheld||DOC.body).appendChild(panel);
 }
 
 /* ============ SVG Icons ============ */
@@ -159,7 +162,7 @@ var I={
 };
 
 /* ============ 工具 ============ */
-function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function esc(s){var d=DOC.createElement('div');d.textContent=s||'';return d.innerHTML;}
 function pct(c,m){if(!m||m<=0)return 0;return Math.max(0,Math.min(100,(c/m)*100));}
 function hpCls(p){if(p<=25)return'crit';if(p<=50)return'low';return'';}
 function rarityCls(r){var m={common:'common',uncommon:'uncommon',rare:'rare',epic:'epic',legendary:'legendary'};return m[r]||'common';}
@@ -170,7 +173,7 @@ var toastTimer=null;
 function showToast(type,msg,dur){
     dur=dur||3000;
     var ct=$('#aiselan-toast-container');if(!ct)return;
-    var t=document.createElement('div');t.className='aiselan-toast '+type;
+    var t=DOC.createElement('div');t.className='aiselan-toast '+type;
     var im={info:I.info,success:I.check,warning:I.alert,error:I.x};
     t.innerHTML=(im[type]||im.info)+'<span>'+esc(msg)+'</span>';
     ct.appendChild(t);
@@ -266,7 +269,7 @@ function bindEvents(){
     var h=$('#aiselan-handle');if(h)h.addEventListener('click',function(e){if(e.target.closest('#aiselan-toggle-btn'))return;togglePanel();});
     var tb=$('#aiselan-toggle-btn');if(tb)tb.addEventListener('click',function(e){e.stopPropagation();togglePanel();});
     var tabs=$('#aiselan-tabs');if(tabs)tabs.addEventListener('click',function(e){var tab=e.target.closest('.aiselan-tab');if(!tab)return;var tn=tab.dataset.tab;if(tn)switchTab(tn);});
-    document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.code==='Backquote'){e.preventDefault();togglePanel();}});
+    DOC.addEventListener('keydown',function(e){if(e.ctrlKey&&e.code==='Backquote'){e.preventDefault();togglePanel();}});
     var ct=$('#aiselan-content');if(ct){
         ct.addEventListener('click',function(e){
             var uc=e.target.closest('.unit-card'),ii=e.target.closest('.investigable-item'),ic=e.target.closest('.item-card'),pc=e.target.closest('.party-member-card');
