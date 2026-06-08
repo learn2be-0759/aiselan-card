@@ -16,8 +16,9 @@ var CSS=`:root{--abg:#0c1119;--asf:#111827;--ael:#182032; --agd:#bfa06a;--agl:#d
     console.log('[艾瑟兰面板] CSS 已注入');
 })();
 
-var P=window.parent;
+var P=window.parent||window;
 var D=P.document;
+if(!P||P===window){console.warn('[艾瑟兰面板] 不在 iframe 中，使用当前窗口');P=window;D=document;}
 var STORAGE_KEY='aiselan_game_state';
 var state=null;
 var prevState=null;
@@ -131,19 +132,41 @@ panelEl=wrap;
 console.log('[艾瑟兰面板] 已注入聊天区');
 }
 
-// ====== MutationObserver 监听新消息 ======
+// ====== 安全注入（断开 observer 避免循环） ======
+var injecting=false;
+function safeInject(){
+if(injecting)return;
+injecting=true;
+if(observer)observer.disconnect();
+injectPanel();
+if(observer){
+var chat=D.getElementById('chat');
+if(chat)observer.observe(chat,{childList:true,subtree:false});
+}
+injecting=false;
+}
+
 function startObserver(){
 var chat=D.getElementById('chat');
 if(!chat){setTimeout(startObserver,500);return;}
 
-observer=new MutationObserver(function(){
-// 面板始终保持在聊天区末尾
-injectPanel();
+observer=new MutationObserver(function(mutations){
+// 忽略由面板自身触发的变更
+for(var i=0;i<mutations.length;i++){
+var m=mutations[i];
+for(var j=0;j<m.addedNodes.length;j++){
+if(m.addedNodes[j].id==='aiselan-inline-panel')return;
+}
+for(var k=0;k<m.removedNodes.length;k++){
+if(m.removedNodes[k].id==='aiselan-inline-panel')return;
+}
+}
+safeInject();
 });
 
 observer.observe(chat,{childList:true,subtree:false});
 console.log('[艾瑟兰面板] 消息监听已启动');
-injectPanel();
+safeInject();
 }
 
 // ====== 初始化 ======
@@ -162,10 +185,10 @@ check();
 
 // ====== 全局 API ======
 P.AiselanBridge={
-setGameState:function(s){if(s){state=s;ensure();save();injectPanel();}},
+setGameState:function(s){if(s){state=s;ensure();save();safeInject();}},
 getGameState:function(){return state;},
-update:function(path,value){var keys=path.split('.'),t=state,i;for(i=0;i<keys.length-1;i++){if(!t[keys[i]])t[keys[i]]={};t=t[keys[i]];}t[keys[keys.length-1]]=value;save();injectPanel();},
-refresh:function(){injectPanel();}
+update:function(path,value){var keys=path.split('.'),t=state,i;for(i=0;i<keys.length-1;i++){if(!t[keys[i]])t[keys[i]]={};t=t[keys[i]];}t[keys[keys.length-1]]=value;save();safeInject();},
+refresh:function(){safeInject();}
 };
 
 init();
