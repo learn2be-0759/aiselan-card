@@ -18,7 +18,9 @@ var AP_CSS = `:root{--ap-bg-deepest: #070a0f; --ap-bg-deep: #0c1119; --ap-bg-sur
 
 /* ============ 等待 DOM 就绪后初始化 ============ */
 function waitForST(cb){
+    console.log('[艾瑟兰作战面板] 等待 ST 就绪...');
     if(document.getElementById('sheld')){
+        console.log('[艾瑟兰作战面板] #sheld 已存在，立即初始化');
         cb();
         return;
     }
@@ -26,18 +28,22 @@ function waitForST(cb){
     var timer=setInterval(function(){
         if(document.getElementById('sheld')){
             clearInterval(timer);
+            console.log('[艾瑟兰作战面板] #sheld 就绪 (等待 '+(count*200)+'ms)');
             cb();
             return;
         }
-        if(++count>100){clearInterval(timer);}
+        if(++count>150){clearInterval(timer);console.error('[艾瑟兰作战面板] 超时：未找到 #sheld');}
     },200);
 }
 
 waitForST(function(){
+    console.log('[艾瑟兰作战面板] 开始注入面板...');
     buildPanelDOM();
+    console.log('[艾瑟兰作战面板] DOM 已构建');
     loadState();
     bindEvents();
     render();
+    console.log('[艾瑟兰作战面板] 面板初始化完成');
 });
 
 /* ============ 状态管理 ============ */
